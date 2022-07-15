@@ -65,6 +65,11 @@ inline float lerp(float x0, float x1, float v) {
     return x0 + (x1 - x0) * v;
 }
 
+inline void setName(char * dest, char const * name, size_t size = 32) {
+    if (size == 0) return;
+    dest[0] = '\0', strncat(dest, name, size - 1);
+}
+
 // inline bool withinRange(float a, float b, float maxDiff = 0.05) {
 //     return (fabsf(a, b) <= maxDiff);
 // }
