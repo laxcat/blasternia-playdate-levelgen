@@ -1,0 +1,32 @@
+include(ExternalProject)
+
+if(VOICE_VISUALIZER_BUILD_EXAMPLES AND NOT APPLE)
+
+    ExternalProject_Add(
+        glfw_dep
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG ${GLFW_TAG}
+        GIT_SHALLOW true
+        SOURCE_DIR ${THIRD_PARTY_DIR}/glfw
+        BUILD_IN_SOURCE 0
+        UPDATE_COMMAND ""
+        CMAKE_ARGS
+            -D CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+            -D CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+            -D CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+            -D CMAKE_STAGING_PREFIX=${EXT_CMAKE_STAGING_PREFIX}
+            -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -D CMAKE_VERBOSE_MAKEFILE=ON
+            -D CMAKE_THREAD_LIBS_INIT=-lpthread
+            -D CMAKE_HAVE_THREADS_LIBRARY=1
+            -D CMAKE_USE_PTHREADS_INIT=1
+            -D THREADS_PREFER_PTHREAD_FLAG=ON
+            -D GLFW_BUILD_EXAMPLES=OFF
+            -D GLFW_BUILD_TESTS=ON
+            -D GLFW_BUILD_DOCS=OFF
+            -D GLFW_USE_WAYLAND=${GLFW_USE_WAYLAND}
+    )
+    set(GLFW_INCLUDE_DIRS ${EXT_CMAKE_STAGING_PREFIX}/include)
+    set(GLFW_LIBRARY_DIR ${EXT_CMAKE_STAGING_PREFIX}/lib)
+
+endif()
