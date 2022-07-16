@@ -71,7 +71,7 @@ if(DEV_INTERFACE)
     )
 endif()
 
-# # SHADERS
+# SHADERS
 include(BGFXCompileShaders)
 BGFXCompileShaders(
     "${CMAKE_CURRENT_SOURCE_DIR}/shader/shaders"    # root of shaders to compile. expects a subdir for each shader.

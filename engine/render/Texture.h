@@ -21,14 +21,14 @@ public:
         return createTexture2D();
     }
 
-    bgfx::TextureHandle createTexture2D() {
+    bgfx::TextureHandle createTexture2D(uint64_t flags = BGFX_TEXTURE_NONE|BGFX_SAMPLER_NONE) {
         handle = bgfx::createTexture2D(
             uint16_t(img->width), 
             uint16_t(img->height), 
             false, 
             1, 
             bgfx::TextureFormat::RGBA8, 
-            0, 
+            flags,
             img->ref()
         );
         return handle;
