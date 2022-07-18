@@ -32,7 +32,7 @@ void RenderSystem::init() {
         255,255,255,255,
         255,255,255,255
     };
-    whiteTexture.allocImageAndCreate(2, 2, 4, data);
+    whiteTexture.createImmutable(2, 2, 4, data);
 }
 
 void RenderSystem::draw() {

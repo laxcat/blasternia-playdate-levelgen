@@ -32,24 +32,24 @@ inline char const * relPath(char const * path) {
 }
 
 
-inline void colorIntToVec4(uint32_t c, glm::vec4 & out) {
+inline void colorUintToVec4(uint32_t c, glm::vec4 & out) {
     out[0] = ((c >> 24)       ) / 255.f;
     out[1] = ((c >> 16) & 0xff) / 255.f;
     out[2] = ((c >>  8) & 0xff) / 255.f;
     out[3] = ( c        & 0xff) / 255.f;
 }
-inline glm::vec4 colorIntToVec4(uint32_t c) {
+inline glm::vec4 colorUintToVec4(uint32_t c) {
     glm::vec4 ret;
-    colorIntToVec4(c, ret);
+    colorUintToVec4(c, ret);
     return ret;
 }
 
-inline int colorVec4ToInt(glm::vec4 const & c) {
-    int ret = 
-        (int(c.r * 255.f) << 24) |
-        (int(c.g * 255.f) << 16) |
-        (int(c.b * 255.f) <<  8) |
-        (int(c.a * 255.f) <<  0);
+inline uint32_t colorVec4ToUint(float * c) {
+    uint32_t ret =
+        (uint32_t(c[0] * 255.f) << 24) |
+        (uint32_t(c[1] * 255.f) << 16) |
+        (uint32_t(c[2] * 255.f) <<  8) |
+        (uint32_t(c[3] * 255.f) <<  0);
     return ret;
 }
 

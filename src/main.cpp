@@ -1,6 +1,6 @@
 #include "../engine/engine.h"
-#include "../engine/dev/print.h"
 #include "../engine/MrManager.h"
+#include "../engine/dev/print.h"
 #include "../engine/primitives/Quad.h"
 #include <imgui.h>
 
@@ -8,8 +8,11 @@ Renderable * plane;
 bgfx::ProgramHandle program;
 Texture levelTexture;
 
+// constexpr size_t W = 32;
+// constexpr size_t H = 32;
+// constexpr size_t C = 4;
+// constexpr size_t levelMaxSize = W*H;
 
-byte_t levelData[32*32*4];
 
 void postInit() {
     program = mm.memSys.loadProgram(mm.assetsPath, "vs_levgen", "fs_levgen");
@@ -25,29 +28,13 @@ void postInit() {
     mat.metallic() = 0.f;
     mat.specular() = 0.f;
 
-    size_t levelDataSize = sizeof(levelData);
-    print("SIZE OF LEVEL DATA %zu\n", levelDataSize);
-    for (size_t i = 0; i < levelDataSize; i += 4) {
-        bool white = i % 8;
-        if ((i / (32*4))% 2) white = !white;
-        if (white) {
-            levelData[i+0] = 0x33;
-            levelData[i+1] = 0x33;
-            levelData[i+2] = 0x33;
-            levelData[i+3] = 0xff;
-        }
-        else {
-            levelData[i+0] = 0x00;
-            levelData[i+1] = 0x00;
-            levelData[i+2] = 0x00;
-            levelData[i+3] = 0xff;
-        }
-    }
+    // size_t levelDataSize = levelMaxSize*C;
+    // print("SIZE OF LEVEL DATA %zu, level max WxH %zu\n", levelDataSize, levelMaxSize);
 
-    levelTexture.allocImageAndCreate(32, 32, 4, levelData);
-    auto handle = levelTexture.createTexture2D(BGFX_SAMPLER_MAG_POINT);
+    auto handle = levelTexture.createMutable(32, 32, 4, BGFX_SAMPLER_MAG_POINT);
     plane->textures.push_back(handle);
     plane->materials.push_back(mat);
+    levelTexture.fill(0xffffffff);
 
     Quad::create(plane, 0, {10.f, 10.f}, 0);
     plane->meshes[0].model = glm::rotate(glm::mat4{1.f}, (float)M_PI_2, {1.f, 0.f, 0.f});
@@ -62,13 +49,33 @@ void postInit() {
 
 void preShutdown() {
     levelTexture.destroy();
+    bgfx::destroy(program);
 }
 
 void preEditor() {
-    if (ImGui::CollapsingHeader("Level Gen", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::ColorEdit4("Base Color", (float *)&plane->materials[0].baseColor, ImGuiColorEditFlags_DisplayHex);
-    }
+    using namespace ImGui;
 
+    if (CollapsingHeader("Level Gen", ImGuiTreeNodeFlags_DefaultOpen)) {
+
+        Separator();
+        TextUnformatted("Utility");
+        PushItemWidth(200);
+        ColorEdit4("Base Color", (float *)&plane->materials[0].baseColor, ImGuiColorEditFlags_DisplayHex);
+        static float a[4] = {0.f, 0.f, 0.f, 1.f};
+        static float b[4] = {1.f, 1.f, 1.f, 1.f};
+        ColorEdit4("A", (float *)&a, ImGuiColorEditFlags_DisplayHex);
+        ColorEdit4("B", (float *)&b, ImGuiColorEditFlags_DisplayHex);
+        PopItemWidth();
+        if (Button("Fill Solid A")) {
+            levelTexture.fill((float *)&a);
+        }
+        SameLine();
+        if (Button("Fill Checkered")) {
+            levelTexture.fillCheckered((float *)&a, (float *)&b);
+        }
+
+        Dummy(ImVec2(0.0f, 20.0f));
+    }
 }
 
 int main() {
