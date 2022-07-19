@@ -22,16 +22,36 @@ void printVbuf() {
     char buf[1024];
     int pen = 0;
     for (int i = 0; i < 4; ++i) {
-        pen += snprintf(buf + pen, 1024-pen, "%d: ", i);
-        pen += toString(((VertLevGen *)plane->buffer) + i, buf + pen, 1024-pen);
-        pen += snprintf(buf + pen, 1024-pen, "\n");
+        pen += snprintf(buf+pen, 1024-pen, "%d: ", i);
+        pen += toString(((VertLevGen *)plane->buffer)+i, buf+pen, 1024-pen);
+        pen += snprintf(buf+pen, 1024-pen, "\n");
     }
     print("%s", buf);
 }
 
+void updateTextureFromData() {
+    int count = LEVEL_DATA_MAX_W*LEVEL_DATA_MAX_H;
+    for (int i = 0; i < count; ++i) {
+        uint32_t color =
+            (levelData.data[i] == LD_VALUE_UNKNOWN)         ? 0xff00ffff :
+            (levelData.data[i] == LD_VALUE_OUT_OF_BOUNDS)   ? 0x333333ff :
+            (levelData.data[i] == LD_VALUE_BLOCK)           ? 0x000000ff :
+            (levelData.data[i] == LD_VALUE_START)           ? 0x008800ff :
+            (levelData.data[i] == LD_VALUE_END)             ? 0x0000ffff :
+            (levelData.data[i] == LD_VALUE_CURRENT)         ? 0xcccc00ff :
+            (levelData.data[i] == LD_VALUE_OPEN)            ? 0xffffffff :
+            (levelData.data[i] == LD_VALUE_PATH)            ? 0x880000ff :
+            (levelData.data[i] == LD_VALUE_EXPANSION)       ? 0x880033ff :
+            0xff00ffff;
+        if ((i % LEVEL_DATA_MAX_W + i / LEVEL_DATA_MAX_W) % 2) color -= 0x11;
+        levelTexture.img.setPixel(i, color);
+    }
+    levelTexture.update();
+}
+
 void setLevelSize(float w, float h) {
-    float u = w / (float)LevelData::maxW;
-    float v = h / (float)LevelData::maxH;
+    float u = w / (float)LEVEL_DATA_MAX_W;
+    float v = h / (float)LEVEL_DATA_MAX_H;
 
     VertLevGen * vb = LevGenQuad::vbufferForIndex(plane, 0);
 
@@ -45,8 +65,9 @@ void setLevelSize(float w, float h) {
     (vb+2)->y = h;
     (vb+3)->y = h;
 
-    levelData.set(w, h);
+    LevelData_setSize(&levelData, w, h);
     LevGenQuad::updateVBuffer(plane, 0);
+    updateTextureFromData();
 
     // print("set to %d %d (uv %f %f)\n", (int)w, (int)h, u, v);
 }
@@ -61,15 +82,14 @@ void postInit() {
     mat.roughness() = 1.f;
     mat.metallic() = 0.f;
     mat.specular() = 0.f;
-    auto tex = levelTexture.createMutable(32, 32, 4, BGFX_SAMPLER_MAG_POINT);
+    uint64_t texFlags = BGFX_SAMPLER_MAG_POINT|BGFX_SAMPLER_U_MIRROR|BGFX_SAMPLER_V_MIRROR;
+    auto tex = levelTexture.createMutable(LEVEL_DATA_MAX_W, LEVEL_DATA_MAX_H, 4, texFlags);
     levelTexture.fillCheckered(0x000000ff, 0xffffffff);
 
     // setup plane
     plane = mm.rendSys.create(program, "level_plane");
     LevGenQuad::allocateBufferWithCount(plane, 1);
-    LevGenQuad::create(plane, 0, {32.f, 32.f}, 0, true); // materialId = index in plane->materials
-    // plane->meshes[0].model = glm::rotate(glm::mat4{1.f}, (float)M_PI_2, {1.f, 0.f, 0.f});
-    // plane->meshes[0].model = glm::translate(plane->meshes[0].model, {16.f, 16.f, 0.f});
+    LevGenQuad::create(plane, 0, {(float)LEVEL_DATA_MAX_W, (float)LEVEL_DATA_MAX_H}, 0, true);
     plane->meshes[0].images.color = 0; // index of texture in plane->textures
     plane->textures.push_back(tex);
     plane->materials.push_back(mat);
@@ -82,8 +102,9 @@ void postInit() {
 
     mm.camera.projType = Camera::ProjType::Ortho;
     mm.camera.orthoResetFn = resetCamera;
-    mm.camera.reset();
 
+    setLevelSize(LEVEL_DATA_MAX_W, LEVEL_DATA_MAX_H);
+    mm.camera.reset();
     // printVbuf();
 }
 
