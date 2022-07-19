@@ -9,7 +9,8 @@ namespace Quad {
             VertGLTF * vbuffer, 
             uint16_t * ibuffer, 
             glm::vec2 size,
-            int materialId = -1
+            int materialId = -1,
+            bool dynamic = false
         ) {
         float w2 = size.x/2;
         float h2 = size.y/2;
@@ -47,8 +48,13 @@ namespace Quad {
 
         memcpy(vbuffer, vdata, sizeof(vdata));
         auto vref = bgfx::makeRef(vbuffer, sizeof(vdata));
-        auto vbuf = bgfx::createVertexBuffer(vref, layout);
-        m.vbufs.push_back(vbuf);
+        if (dynamic) {
+            m.dynvbuf = bgfx::createDynamicVertexBuffer(vref, layout);
+        }
+        else {
+            auto vbuf = bgfx::createVertexBuffer(vref, layout);
+            m.vbufs.push_back(vbuf);
+        }
 
         r->meshes.push_back(m);
 
@@ -86,8 +92,9 @@ namespace Quad {
             Renderable * r, 
             size_t index,
             glm::vec2 size,
-            int materialId = -1
+            int materialId = -1,
+            bool dynamic = false
         ) {
-        return create(r, vbufferForIndex(r, index), ibufferForIndex(r, index), size, materialId);
+        return create(r, vbufferForIndex(r, index), ibufferForIndex(r, index), size, materialId, dynamic);
     }
 }
