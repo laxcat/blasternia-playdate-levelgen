@@ -16,11 +16,11 @@ namespace Quad {
 
         // y-up
         VertGLTF vdata[] = {
-            // pos        // norm           // tex
-            {-w2, 0, -h2,    0.f, 1.f, 0.f,    0.f, 0.f}, 
-            {+w2, 0, -h2,    0.f, 1.f, 0.f,    1.f, 0.f},
-            {+w2, 0, +h2,    0.f, 1.f, 0.f,    1.f, 1.f},
-            {-w2, 0, +h2,    0.f, 1.f, 0.f,    0.f, 1.f},
+            // pos           // norm            // tex
+            {-w2, -h2, 0,    0.f, 0.f, 1.f,     0.f, 0.f},
+            {+w2, -h2, 0,    0.f, 0.f, 1.f,     1.f, 0.f},
+            {+w2, +h2, 0,    0.f, 0.f, 1.f,     1.f, 1.f},
+            {-w2, +h2, 0,    0.f, 0.f, 1.f,     0.f, 1.f},
         };
 
         // cw winding

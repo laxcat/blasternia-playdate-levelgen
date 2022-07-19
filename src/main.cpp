@@ -13,6 +13,13 @@ Texture levelTexture;
 // constexpr size_t C = 4;
 // constexpr size_t levelMaxSize = W*H;
 
+void resetCamera(Camera & c) {
+    c.target      = {8.f, 16.f, 0.f};
+    c.distance    = 34;
+    c.pitch       = 0;
+    c.yaw         = 0;
+    c.fov         = 0;
+}
 
 void postInit() {
     program = mm.memSys.loadProgram(mm.assetsPath, "vs_levgen", "fs_levgen");
@@ -28,16 +35,14 @@ void postInit() {
     mat.metallic() = 0.f;
     mat.specular() = 0.f;
 
-    // size_t levelDataSize = levelMaxSize*C;
-    // print("SIZE OF LEVEL DATA %zu, level max WxH %zu\n", levelDataSize, levelMaxSize);
-
     auto handle = levelTexture.createMutable(32, 32, 4, BGFX_SAMPLER_MAG_POINT);
     plane->textures.push_back(handle);
     plane->materials.push_back(mat);
-    levelTexture.fill(0xffffffff);
+    levelTexture.fillCheckered(0x000000ff, 0xffffffff);
 
-    Quad::create(plane, 0, {10.f, 10.f}, 0);
-    plane->meshes[0].model = glm::rotate(glm::mat4{1.f}, (float)M_PI_2, {1.f, 0.f, 0.f});
+    Quad::create(plane, 0, {32.f, 32.f}, 0);
+    // plane->meshes[0].model = glm::rotate(glm::mat4{1.f}, (float)M_PI_2, {1.f, 0.f, 0.f});
+    plane->meshes[0].model = glm::translate(plane->meshes[0].model, {16.f, 16.f, 0.f});
     plane->meshes[0].images.color = 0;
 
     mm.rendSys.lights.dirDataDirAsEuler[0].x = -M_PI_2;
@@ -45,6 +50,10 @@ void postInit() {
     mm.rendSys.lights.dirStrengthDiffuseAt (0) = 0.f;
     mm.rendSys.lights.dirStrengthSpecularAt(0) = 0.f;
     mm.rendSys.lights.dirStrengthOverallAt (0) = 1.f;
+
+    mm.camera.projType = Camera::ProjType::Ortho;
+    mm.camera.orthoResetFn = resetCamera;
+    mm.camera.reset();
 }
 
 void preShutdown() {
