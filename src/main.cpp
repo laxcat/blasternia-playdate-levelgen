@@ -9,6 +9,7 @@ Renderable * plane;
 bgfx::ProgramHandle program;
 Texture levelTexture;
 LevelData levelData;
+bool showCurrent = true;
 
 void resetCamera(Camera & c) {
     c.target      = {(float)levelData.w/2.f-7.f, (float)levelData.h/2.f, 0.f};
@@ -31,12 +32,10 @@ void printVbuf() {
 
 void updateDisplay() {
     // update texture
-    int count = LEVEL_DATA_MAX_W * LEVEL_DATA_MAX_H;
-    for (int i = 0; i < count; ++i) {
+    uint16_t count = LEVEL_DATA_MAX_W * LEVEL_DATA_MAX_H;
+    for (uint16_t i = 0; i < count; ++i) {
         uint32_t color =
             (levelData.data[i] == LD_VALUE_UNKNOWN)         ? 0xff00ffff :
-            (levelData.data[i] == LD_VALUE_CURRENT)         ? 0xcccc00ff :
-            (levelData.data[i] == LD_VALUE_TARGET)          ? 0x999900ff :
             (levelData.data[i] == LD_VALUE_OUT_OF_BOUNDS)   ? 0x333333ff :
             (levelData.data[i] == LD_VALUE_BLOCK)           ? 0x000000ff :
             (levelData.data[i] == LD_VALUE_START)           ? 0x008800ff :
@@ -47,6 +46,10 @@ void updateDisplay() {
             0xff00ffff;
         if ((i % LEVEL_DATA_MAX_W + i / LEVEL_DATA_MAX_W) % 2) color -= 0x11;
         levelTexture.img.setPixel(i, color);
+
+        if (showCurrent && levelData.currentIndex == i) {
+            levelTexture.img.setPixel(i, 0xff9900ff);
+        }
     }
     levelTexture.update();
 
@@ -74,6 +77,7 @@ void updateDisplay() {
 void genAndUpdate() {
     LevelData_genSize(&levelData);
     LevelData_genStartEnd(&levelData);
+    LevelData_genPath(&levelData, NULL);
     updateDisplay();
     mm.camera.reset();
 }
@@ -113,6 +117,7 @@ void postInit() {
     // printVbuf();
     LevelData_setLevel(&levelData, 1, 0);
     genAndUpdate();
+
 }
 
 void preShutdown() {
@@ -126,6 +131,10 @@ void preEditor() {
     if (CollapsingHeader("Level Gen", ImGuiTreeNodeFlags_DefaultOpen)) {
 
         Dummy(ImVec2(0.0f, 20.0f));
+
+        if (Checkbox("Show Current & Target", &showCurrent)) {
+            updateDisplay();
+        }
 
         if (InputInt("Seed", (int *)&levelData.seed)) {
             genAndUpdate();
