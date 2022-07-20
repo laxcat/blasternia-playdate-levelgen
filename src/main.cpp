@@ -12,7 +12,7 @@ LevelData levelData;
 
 void resetCamera(Camera & c) {
     c.target      = {(float)levelData.w/2.f-7.f, (float)levelData.h/2.f, 0.f};
-    c.distance    = 34;
+    c.distance    = LEVEL_DATA_MAX_H + 2.f;
     c.pitch       = 0;
     c.yaw         = 0;
     c.fov         = 0;
@@ -31,15 +31,16 @@ void printVbuf() {
 
 void updateDisplay() {
     // update texture
-    int count = LEVEL_DATA_MAX_W*LEVEL_DATA_MAX_H;
+    int count = LEVEL_DATA_MAX_W * LEVEL_DATA_MAX_H;
     for (int i = 0; i < count; ++i) {
         uint32_t color =
             (levelData.data[i] == LD_VALUE_UNKNOWN)         ? 0xff00ffff :
+            (levelData.data[i] == LD_VALUE_CURRENT)         ? 0xcccc00ff :
+            (levelData.data[i] == LD_VALUE_TARGET)          ? 0x999900ff :
             (levelData.data[i] == LD_VALUE_OUT_OF_BOUNDS)   ? 0x333333ff :
             (levelData.data[i] == LD_VALUE_BLOCK)           ? 0x000000ff :
             (levelData.data[i] == LD_VALUE_START)           ? 0x008800ff :
             (levelData.data[i] == LD_VALUE_END)             ? 0x0000ffff :
-            (levelData.data[i] == LD_VALUE_CURRENT)         ? 0xcccc00ff :
             (levelData.data[i] == LD_VALUE_OPEN)            ? 0xffffffff :
             (levelData.data[i] == LD_VALUE_PATH)            ? 0x880000ff :
             (levelData.data[i] == LD_VALUE_EXPANSION)       ? 0x880033ff :
@@ -124,23 +125,39 @@ void preEditor() {
 
     if (CollapsingHeader("Level Gen", ImGuiTreeNodeFlags_DefaultOpen)) {
 
+        Dummy(ImVec2(0.0f, 20.0f));
+
         if (InputInt("Seed", (int *)&levelData.seed)) {
             genAndUpdate();
         }
-
         if (DragInt("Level", (int *)&levelData.levelId, 0.5, 1, 500)) {
             genAndUpdate();
         }
 
+        Dummy(ImVec2(0.0f, 20.0f));
         Separator();
+        Dummy(ImVec2(0.0f, 20.0f));
 
-        if (DragInt2("Size", (int *)&levelData.w, 0.5, 3, 32)) {
+        PushItemWidth(200);
+        bool widthChanged = DragInt("W", (int *)&levelData.w, 0.5, LEVEL_DATA_MIN_W, LEVEL_DATA_MAX_W);
+        SameLine();
+        bool heightChanged = DragInt("H", (int *)&levelData.h, 0.5, LEVEL_DATA_MIN_H, LEVEL_DATA_MAX_H);
+        PopItemWidth();
+        if (widthChanged || heightChanged) {
             LevelData_setSize(&levelData, levelData.w, levelData.h);
             updateDisplay();
             mm.camera.reset();
         }
+        if (Button("Gen From Current Size")) {
+            LevelData_genStartEnd(&levelData);
+            updateDisplay();
+            mm.camera.reset();
+        }
 
+        Dummy(ImVec2(0.0f, 20.0f));
         Separator();
+        Dummy(ImVec2(0.0f, 20.0f));
+
         TextUnformatted("Utility");
         PushItemWidth(200);
         ColorEdit4("Base Color", (float *)&plane->materials[0].baseColor, ImGuiColorEditFlags_DisplayHex);

@@ -188,7 +188,7 @@ void Editor::guiLighting() {
 }
 
 void Editor::guiCamera() {
-    if (CollapsingHeader("Camera (Orbit Target)", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (CollapsingHeader("Camera (Orbit Target)")) {
         auto oldProjType = mm.camera.projType;
         if (BeginCombo("Type", mm.camera.projTypeStr())) {
             for (int n = 0; n < mm.camera.projTypeCount(); ++n) {
