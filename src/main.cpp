@@ -2,7 +2,7 @@
 #include "../engine/MrManager.h"
 #include "../engine/dev/print.h"
 #include "LevGenQuad.h"
-#include "LevelData.h"
+#include "../../Playdate_proj/src/levelgen/LevelData.h"
 #include <imgui.h>
 
 Renderable * plane;
@@ -29,7 +29,8 @@ void printVbuf() {
     print("%s", buf);
 }
 
-void updateTextureFromData() {
+void updateDisplay() {
+    // update texture
     int count = LEVEL_DATA_MAX_W*LEVEL_DATA_MAX_H;
     for (int i = 0; i < count; ++i) {
         uint32_t color =
@@ -47,9 +48,10 @@ void updateTextureFromData() {
         levelTexture.img.setPixel(i, color);
     }
     levelTexture.update();
-}
 
-void setLevelSize(float w, float h) {
+    // update vbuffer
+    float w = levelData.w;
+    float h = levelData.h;
     float u = w / (float)LEVEL_DATA_MAX_W;
     float v = h / (float)LEVEL_DATA_MAX_H;
 
@@ -65,11 +67,14 @@ void setLevelSize(float w, float h) {
     (vb+2)->y = h;
     (vb+3)->y = h;
 
-    LevelData_setSize(&levelData, w, h);
     LevGenQuad::updateVBuffer(plane, 0);
-    updateTextureFromData();
+}
 
-    // print("set to %d %d (uv %f %f)\n", (int)w, (int)h, u, v);
+void genAndUpdate() {
+    LevelData_genSize(&levelData);
+    LevelData_genStartEnd(&levelData);
+    updateDisplay();
+    mm.camera.reset();
 }
 
 void postInit() {
@@ -103,9 +108,10 @@ void postInit() {
     mm.camera.projType = Camera::ProjType::Ortho;
     mm.camera.orthoResetFn = resetCamera;
 
-    setLevelSize(LEVEL_DATA_MAX_W, LEVEL_DATA_MAX_H);
-    mm.camera.reset();
+    // setLevelSize(LEVEL_DATA_MAX_W, LEVEL_DATA_MAX_H);
     // printVbuf();
+    LevelData_setLevel(&levelData, 1, 0);
+    genAndUpdate();
 }
 
 void preShutdown() {
@@ -118,9 +124,19 @@ void preEditor() {
 
     if (CollapsingHeader("Level Gen", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-        DragInt2("Size", (int *)&levelData.w, 0.5, 3, 32);
-        if (Button("Change Size")) {
-            setLevelSize(levelData.w, levelData.h);
+        if (InputInt("Seed", (int *)&levelData.seed)) {
+            genAndUpdate();
+        }
+
+        if (DragInt("Level", (int *)&levelData.levelId, 0.5, 1, 500)) {
+            genAndUpdate();
+        }
+
+        Separator();
+
+        if (DragInt2("Size", (int *)&levelData.w, 0.5, 3, 32)) {
+            LevelData_setSize(&levelData, levelData.w, levelData.h);
+            updateDisplay();
             mm.camera.reset();
         }
 

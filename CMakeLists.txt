@@ -25,7 +25,8 @@ include_directories(${SetupLib_include_dirs})
 set(EXE_NAME blastlg)
 add_executable(${EXE_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/LevelData.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Playdate_proj/src/common/rng.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Playdate_proj/src/levelgen/LevelData.c
 )
 target_compile_definitions(${EXE_NAME} PUBLIC DEV_INTERFACE=${DEV_INTERFACE})
 target_link_libraries(${EXE_NAME} "game_project_engine" ${SetupLib_libs})
