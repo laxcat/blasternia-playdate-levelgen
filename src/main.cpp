@@ -164,23 +164,22 @@ void preEditor() {
         }
 
         Dummy(ImVec2(0.0f, 20.0f));
-        Separator();
-        Dummy(ImVec2(0.0f, 20.0f));
 
-        TextUnformatted("Utility");
-        PushItemWidth(200);
-        ColorEdit4("Base Color", (float *)&plane->materials[0].baseColor, ImGuiColorEditFlags_DisplayHex);
-        static float a[4] = {0.f, 0.f, 0.f, 1.f};
-        static float b[4] = {1.f, 1.f, 1.f, 1.f};
-        ColorEdit4("A", (float *)&a, ImGuiColorEditFlags_DisplayHex);
-        ColorEdit4("B", (float *)&b, ImGuiColorEditFlags_DisplayHex);
-        PopItemWidth();
-        if (Button("Fill Solid A")) {
-            levelTexture.fill((float *)&a);
-        }
-        SameLine();
-        if (Button("Fill Checkered")) {
-            levelTexture.fillCheckered((float *)&a, (float *)&b);
+        if (CollapsingHeader("Utility")) {
+            PushItemWidth(200);
+            ColorEdit4("Base Color", (float *)&plane->materials[0].baseColor, ImGuiColorEditFlags_DisplayHex);
+            static float a[4] = {0.f, 0.f, 0.f, 1.f};
+            static float b[4] = {1.f, 1.f, 1.f, 1.f};
+            ColorEdit4("A", (float *)&a, ImGuiColorEditFlags_DisplayHex);
+            ColorEdit4("B", (float *)&b, ImGuiColorEditFlags_DisplayHex);
+            PopItemWidth();
+            if (Button("Fill Solid A")) {
+                levelTexture.fill((float *)&a);
+            }
+            SameLine();
+            if (Button("Fill Checkered")) {
+                levelTexture.fillCheckered((float *)&a, (float *)&b);
+            }
         }
 
         Dummy(ImVec2(0.0f, 20.0f));
