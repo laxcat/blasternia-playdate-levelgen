@@ -30,6 +30,22 @@ void printVbuf() {
     print("%s", buf);
 }
 
+void showDistanceData() {
+    uint16_t count = LEVEL_DATA_MAX_W * LEVEL_DATA_MAX_H;
+    for (uint16_t i = 0; i < count; ++i) {
+        if (i % LEVEL_DATA_MAX_W >= levelData.w || i / LEVEL_DATA_MAX_W >= levelData.h) continue;
+        byte_t v = (byte_t)(levelData.distanceData[i] * 255.f);
+        uint32_t color =
+            v << 24 |
+            v << 16 |
+            v <<  8 |
+            0xff;
+        // print("(%2d,%2d) color: 0x%08x\n", i % LEVEL_DATA_MAX_W, i / LEVEL_DATA_MAX_W, color);
+        levelTexture.img.setPixel(i, color);
+    }
+    levelTexture.update();
+}
+
 void updateDisplay() {
     // update texture
     uint16_t count = LEVEL_DATA_MAX_W * LEVEL_DATA_MAX_H;
@@ -144,6 +160,13 @@ void preEditor() {
         }
 
         Dummy(ImVec2(0.0f, 20.0f));
+
+        if (Button("Update Display")) {
+            updateDisplay();
+            mm.camera.reset();
+        }
+
+        Dummy(ImVec2(0.0f, 20.0f));
         Separator();
         Dummy(ImVec2(0.0f, 20.0f));
 
@@ -165,7 +188,7 @@ void preEditor() {
 
         Dummy(ImVec2(0.0f, 20.0f));
 
-        if (CollapsingHeader("Utility")) {
+        if (CollapsingHeader("Utility", ImGuiTreeNodeFlags_DefaultOpen)) {
             PushItemWidth(200);
             ColorEdit4("Base Color", (float *)&plane->materials[0].baseColor, ImGuiColorEditFlags_DisplayHex);
             static float a[4] = {0.f, 0.f, 0.f, 1.f};
@@ -179,6 +202,9 @@ void preEditor() {
             SameLine();
             if (Button("Fill Checkered")) {
                 levelTexture.fillCheckered((float *)&a, (float *)&b);
+            }
+            if (Button("Fill w Dist Data")) {
+                showDistanceData();
             }
         }
 
