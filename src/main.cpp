@@ -19,7 +19,7 @@ int pathStep = 1000;
 int pathStepCount = -1;
 
 void resetCamera(Camera & c) {
-    c.target      = {(float)levelData.w/2.f-7.f, (float)levelData.h/2.f, 0.f};
+    c.target      = {(float)levelData.w/2.f-(float)LEVEL_DATA_MAX_W/4.f, (float)levelData.h/2.f, 0.f};
     c.distance    = LEVEL_DATA_MAX_H + 2.f;
     c.pitch       = 0;
     c.yaw         = 0;
