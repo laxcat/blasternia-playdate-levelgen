@@ -1,9 +1,12 @@
+#include <time.h>
 #include "../engine/engine.h"
 #include "../engine/MrManager.h"
 #include "../engine/dev/print.h"
 #include "LevGenQuad.h"
 #include "../../Playdate_proj/src/levelgen/LevelData.h"
 #include <imgui.h>
+struct timespec genStartTime, genEndTime;
+long lastGenTime; // microseconds
 
 Renderable * plane;
 bgfx::ProgramHandle program;
@@ -115,6 +118,8 @@ void updateDisplay() {
 }
 
 void genAndUpdate() {
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &genStartTime);
+
     LevelData_genSize(&levelData);
 
     LevelData_genStartEnd(&levelData);
@@ -123,6 +128,12 @@ void genAndUpdate() {
     pathStep = pathStepCount;
 
     LevelData_genFillAroundPath(&levelData);
+
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &genEndTime);
+    // microseconds
+    long end =   (  genEndTime.tv_sec * 1e6 +   genEndTime.tv_nsec * 1e-3);
+    long start = (genStartTime.tv_sec * 1e6 + genStartTime.tv_nsec * 1e-3);
+    lastGenTime = end - start;
 
     updateDisplay();
     mm.camera.reset();
@@ -198,6 +209,8 @@ void preEditor() {
             genAndUpdate();
         }
 
+        Dummy(ImVec2(0.0f, 10.0f));
+        Text("Last generation time (µsec): %ld", lastGenTime);
         Dummy(ImVec2(0.0f, 20.0f));
 
         if (Button("Update Display")) {
