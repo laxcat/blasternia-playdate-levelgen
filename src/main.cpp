@@ -14,7 +14,7 @@ Texture levelTexture;
 LevelData levelData;
 bool showCurrent = true;
 
-uint16_t pathCache[1000];
+int pathCache[1000];
 int pathStep = 1000;
 int pathStepCount = -1;
 
@@ -38,8 +38,8 @@ void printVbuf() {
 }
 
 // void showDistanceData() {
-//     uint16_t count = LEVEL_DATA_MAX_W * LEVEL_DATA_MAX_H;
-//     for (uint16_t i = 0; i < count; ++i) {
+//     int count = LEVEL_DATA_MAX_W * LEVEL_DATA_MAX_H;
+//     for (int i = 0; i < count; ++i) {
 //         if (i % LEVEL_DATA_MAX_W >= levelData.w || i / LEVEL_DATA_MAX_W >= levelData.h) continue;
 //         byte_t v = (byte_t)(levelData.distanceData[i] * 255.f);
 //         uint32_t color =
@@ -68,8 +68,7 @@ uint32_t colorForLevelDataValue(LevelDataValue ldv) {
 
 void updateDisplay() {
     // update texture
-    uint16_t count = LEVEL_DATA_MAX_W * LEVEL_DATA_MAX_H;
-    for (uint16_t i = 0; i < count; ++i) {
+    for (int i = 0; i < LEVEL_DATA_DATA_SIZE; ++i) {
         uint32_t color = colorForLevelDataValue((LevelDataValue)levelData.data[i]);
 
         if ((i % LEVEL_DATA_MAX_W + i / LEVEL_DATA_MAX_W) % 2) color -= 0x22;
@@ -128,6 +127,8 @@ void genAndUpdate() {
     pathStep = pathStepCount;
 
     LevelData_genFillAroundPath(&levelData);
+
+    LevelData_genCrop(&levelData);
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &genEndTime);
     // microseconds
