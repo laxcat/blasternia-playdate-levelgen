@@ -59,7 +59,7 @@ uint32_t colorForLevelDataValue(LevelDataValue ldv) {
         (ldv == LD_VALUE_END)             ? 0x0000ffff :
         (ldv == LD_VALUE_OPEN)            ? 0xffffffff :
         (ldv == LD_VALUE_PATH)            ? 0x880000ff :
-        (ldv == LD_VALUE_EXPANSION)       ? 0x880033ff :
+        (ldv == LD_VALUE_EXPANSION)       ? 0x880055ff :
         0xff00ffff;
 }
 
@@ -69,7 +69,7 @@ void updateDisplay() {
     for (uint16_t i = 0; i < count; ++i) {
         uint32_t color = colorForLevelDataValue((LevelDataValue)levelData.data[i]);
 
-        if ((i % LEVEL_DATA_MAX_W + i / LEVEL_DATA_MAX_W) % 2) color -= 0x11;
+        if ((i % LEVEL_DATA_MAX_W + i / LEVEL_DATA_MAX_W) % 2) color -= 0x22;
 
         levelTexture.img.setPixel(i, color);
     }
@@ -116,9 +116,14 @@ void updateDisplay() {
 
 void genAndUpdate() {
     LevelData_genSize(&levelData);
+
     LevelData_genStartEnd(&levelData);
+
     pathStepCount = LevelData_genPath(&levelData, 1000, pathCache);
     pathStep = pathStepCount;
+
+    LevelData_genFillAroundPath(&levelData);
+
     updateDisplay();
     mm.camera.reset();
 }
@@ -187,7 +192,9 @@ void preEditor() {
         if (InputInt("Seed", (int *)&levelData.seed)) {
             genAndUpdate();
         }
-        if (DragInt("Level", (int *)&levelData.levelId, 0.5, 1, 500)) {
+        if (InputInt("Level", (int *)&levelData.levelId)) {
+            if (levelData.levelId == 0) levelData.levelId = 1;
+            if (levelData.levelId > LEVEL_DATA_LAST_LEVEL) levelData.levelId = LEVEL_DATA_LAST_LEVEL;
             genAndUpdate();
         }
 
