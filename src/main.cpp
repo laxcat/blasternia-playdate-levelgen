@@ -11,6 +11,10 @@ Texture levelTexture;
 LevelData levelData;
 bool showCurrent = true;
 
+uint16_t pathCache[1000];
+int pathStep = 1000;
+int pathStepCount = -1;
+
 void resetCamera(Camera & c) {
     c.target      = {(float)levelData.w/2.f-7.f, (float)levelData.h/2.f, 0.f};
     c.distance    = LEVEL_DATA_MAX_H + 2.f;
@@ -30,43 +34,63 @@ void printVbuf() {
     print("%s", buf);
 }
 
-void showDistanceData() {
-    uint16_t count = LEVEL_DATA_MAX_W * LEVEL_DATA_MAX_H;
-    for (uint16_t i = 0; i < count; ++i) {
-        if (i % LEVEL_DATA_MAX_W >= levelData.w || i / LEVEL_DATA_MAX_W >= levelData.h) continue;
-        byte_t v = (byte_t)(levelData.distanceData[i] * 255.f);
-        uint32_t color =
-            v << 24 |
-            v << 16 |
-            v <<  8 |
-            0xff;
-        // print("(%2d,%2d) color: 0x%08x\n", i % LEVEL_DATA_MAX_W, i / LEVEL_DATA_MAX_W, color);
-        levelTexture.img.setPixel(i, color);
-    }
-    levelTexture.update();
+// void showDistanceData() {
+//     uint16_t count = LEVEL_DATA_MAX_W * LEVEL_DATA_MAX_H;
+//     for (uint16_t i = 0; i < count; ++i) {
+//         if (i % LEVEL_DATA_MAX_W >= levelData.w || i / LEVEL_DATA_MAX_W >= levelData.h) continue;
+//         byte_t v = (byte_t)(levelData.distanceData[i] * 255.f);
+//         uint32_t color =
+//             v << 24 |
+//             v << 16 |
+//             v <<  8 |
+//             0xff;
+//         // print("(%2d,%2d) color: 0x%08x\n", i % LEVEL_DATA_MAX_W, i / LEVEL_DATA_MAX_W, color);
+//         levelTexture.img.setPixel(i, color);
+//     }
+//     levelTexture.update();
+// }
+
+uint32_t colorForLevelDataValue(LevelDataValue ldv) {
+    return
+        (ldv == LD_VALUE_UNKNOWN)         ? 0xff00ffff :
+        (ldv == LD_VALUE_OUT_OF_BOUNDS)   ? 0x333333ff :
+        (ldv == LD_VALUE_BLOCK)           ? 0x000000ff :
+        (ldv == LD_VALUE_START)           ? 0x008800ff :
+        (ldv == LD_VALUE_END)             ? 0x0000ffff :
+        (ldv == LD_VALUE_OPEN)            ? 0xffffffff :
+        (ldv == LD_VALUE_PATH)            ? 0x880000ff :
+        (ldv == LD_VALUE_EXPANSION)       ? 0x880033ff :
+        0xff00ffff;
 }
 
 void updateDisplay() {
     // update texture
     uint16_t count = LEVEL_DATA_MAX_W * LEVEL_DATA_MAX_H;
     for (uint16_t i = 0; i < count; ++i) {
-        uint32_t color =
-            (levelData.data[i] == LD_VALUE_UNKNOWN)         ? 0xff00ffff :
-            (levelData.data[i] == LD_VALUE_OUT_OF_BOUNDS)   ? 0x333333ff :
-            (levelData.data[i] == LD_VALUE_BLOCK)           ? 0x000000ff :
-            (levelData.data[i] == LD_VALUE_START)           ? 0x008800ff :
-            (levelData.data[i] == LD_VALUE_END)             ? 0x0000ffff :
-            (levelData.data[i] == LD_VALUE_OPEN)            ? 0xffffffff :
-            (levelData.data[i] == LD_VALUE_PATH)            ? 0x880000ff :
-            (levelData.data[i] == LD_VALUE_EXPANSION)       ? 0x880033ff :
-            0xff00ffff;
-        if ((i % LEVEL_DATA_MAX_W + i / LEVEL_DATA_MAX_W) % 2) color -= 0x11;
-        levelTexture.img.setPixel(i, color);
+        uint32_t color = colorForLevelDataValue((LevelDataValue)levelData.data[i]);
 
-        if (showCurrent && levelData.currentIndex == i) {
-            levelTexture.img.setPixel(i, 0xff9900ff);
+        if ((i % LEVEL_DATA_MAX_W + i / LEVEL_DATA_MAX_W) % 2) color -= 0x11;
+
+        levelTexture.img.setPixel(i, color);
+    }
+
+    // adjust for path
+    // printf("COUNT: %d\n", pathStepCount);
+    for (int p = 0; p < pathStepCount; ++p) {
+        // int px = pathCache[p] % LEVEL_DATA_MAX_W;
+        // int py = pathCache[p] / LEVEL_DATA_MAX_W;
+        // printf("Path %d: (%d,%d)\n", p, px, py);
+
+        if (p >= pathStep && pathCache[p] != levelData.startIndex && pathCache[p] != levelData.endIndex) {
+            levelTexture.img.setPixelRGB(pathCache[p], colorForLevelDataValue(LD_VALUE_OPEN));
         }
     }
+
+    // draw current
+    if (showCurrent) {
+        levelTexture.img.setPixel(levelData.currentIndex, 0xff9900ff);
+    }
+
     levelTexture.update();
 
     // update vbuffer
@@ -93,7 +117,8 @@ void updateDisplay() {
 void genAndUpdate() {
     LevelData_genSize(&levelData);
     LevelData_genStartEnd(&levelData);
-    LevelData_genPath(&levelData, NULL);
+    pathStepCount = LevelData_genPath(&levelData, 1000, pathCache);
+    pathStep = pathStepCount;
     updateDisplay();
     mm.camera.reset();
 }
@@ -152,6 +177,13 @@ void preEditor() {
             updateDisplay();
         }
 
+        if (InputInt("Path Step", (int *)&pathStep)) {
+            if (pathStep < 0) pathStep = pathStepCount;
+            if (pathStep > pathStepCount) pathStep = 0;
+            levelData.currentIndex = (pathStep) ? pathCache[pathStep-1] : levelData.startIndex;
+            updateDisplay();
+        }
+
         if (InputInt("Seed", (int *)&levelData.seed)) {
             genAndUpdate();
         }
@@ -203,9 +235,9 @@ void preEditor() {
             if (Button("Fill Checkered")) {
                 levelTexture.fillCheckered((float *)&a, (float *)&b);
             }
-            if (Button("Fill w Dist Data")) {
-                showDistanceData();
-            }
+            // if (Button("Fill w Dist Data")) {
+            //     showDistanceData();
+            // }
         }
 
         Dummy(ImVec2(0.0f, 20.0f));
