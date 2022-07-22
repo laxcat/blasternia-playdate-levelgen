@@ -188,6 +188,13 @@ void preEditor() {
 
     if (CollapsingHeader("Level Gen", ImGuiTreeNodeFlags_DefaultOpen)) {
 
+        // Dummy(ImVec2(0.0f, 20.0f));
+        // if (Button("Crop")) {
+        //     LevelData_genCrop(&levelData);
+        //     updateDisplay();
+        //     mm.camera.reset();
+        // }
+
         Dummy(ImVec2(0.0f, 20.0f));
 
         if (Checkbox("Show Current & Target", &showCurrent)) {
