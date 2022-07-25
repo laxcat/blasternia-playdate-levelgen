@@ -53,7 +53,7 @@ void printVbuf() {
 //     levelTexture.update();
 // }
 
-uint32_t colorForLevelDataValue(LevelDataValue ldv) {
+uint32_t colorForLevelDataValue(byte_t ldv) {
     return
         (ldv == LD_VALUE_UNKNOWN)         ? 0xff00ffff :
         (ldv == LD_VALUE_OUT_OF_BOUNDS)   ? 0x333333ff :
@@ -69,7 +69,14 @@ uint32_t colorForLevelDataValue(LevelDataValue ldv) {
 void updateDisplay() {
     // update texture
     for (int i = 0; i < LEVEL_DATA_DATA_SIZE; ++i) {
-        uint32_t color = colorForLevelDataValue((LevelDataValue)levelData.data[i]);
+        uint32_t color = colorForLevelDataValue(levelData.data[i]);
+
+        // printf("path step %d of %d\n", pathStep, pathStepCount);
+        if (pathStep < pathStepCount &&
+            (levelData.data[i] == LD_VALUE_EXPANSION || levelData.data[i] == LD_VALUE_BLOCK)
+        ) {
+            color = colorForLevelDataValue(LD_VALUE_OPEN);
+        }
 
         if ((i % LEVEL_DATA_MAX_W + i / LEVEL_DATA_MAX_W) % 2) color -= 0x22;
 
@@ -78,12 +85,12 @@ void updateDisplay() {
 
     // adjust for path
     // printf("COUNT: %d\n", pathStepCount);
-    for (int p = 0; p < pathStepCount; ++p) {
+    for (int p = pathStep; p < pathStepCount; ++p) {
         // int px = pathCache[p] % LEVEL_DATA_MAX_W;
         // int py = pathCache[p] / LEVEL_DATA_MAX_W;
         // printf("Path %d: (%d,%d)\n", p, px, py);
 
-        if (p >= pathStep && pathCache[p] != levelData.startIndex && pathCache[p] != levelData.endIndex) {
+        if (pathCache[p] != levelData.startIndex && pathCache[p] != levelData.endIndex) {
             levelTexture.img.setPixelRGB(pathCache[p], colorForLevelDataValue(LD_VALUE_OPEN));
         }
     }
