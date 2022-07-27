@@ -3,7 +3,7 @@
 #include "../engine/MrManager.h"
 #include "../engine/dev/print.h"
 #include "LevGenQuad.h"
-#include "../../Playdate_proj/src/levelgen/LevelData.h"
+#include "../../Playdate_proj/src/game/leveldata.h"
 #include <imgui.h>
 struct timespec genStartTime, genEndTime;
 long lastGenTime; // microseconds
