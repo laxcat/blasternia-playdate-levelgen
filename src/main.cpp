@@ -132,6 +132,9 @@ void updateDisplay() {
 void genAndUpdate(GenInfo const & gi = {}) {
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &genStartTime);
 
+    // reset
+    LevelData_setSize(&levelData, LEVEL_DATA_MAX_W, LEVEL_DATA_MAX_H);
+
     if (!gi.skipSize) {
         LevelData_genSize(&levelData);
     }
@@ -190,11 +193,18 @@ void postInit() {
     mm.camera.projType = Camera::ProjType::Ortho;
     mm.camera.orthoResetFn = resetCamera;
 
-    // setLevelSize(LEVEL_DATA_MAX_W, LEVEL_DATA_MAX_H);
-    // printVbuf();
     LevelData_setLevel(&levelData, 1, 0);
     genAndUpdate();
 
+}
+
+void preDraw() {
+    // static uint32_t gen = 1;
+    // if (gen <= 10000) {
+    //     LevelData_setLevel(&levelData, gen, 0);
+    //     genAndUpdate();
+    //     gen++;
+    // }
 }
 
 void preShutdown() {
@@ -247,10 +257,15 @@ void preEditor() {
         Text("end index: %s", LDUtil_indexToString(levelData.endIndex, temp));
         Dummy(ImVec2(0.0f, 20.0f));
 
-        if (Button("Regen")) {
-            genAndUpdate();
-        }
+        static GenInfo gi;
+        Checkbox("Skip size", &gi.skipSize);
         SameLine();
+        Checkbox("Skip path", &gi.skipPath);
+        SameLine();
+        Checkbox("Skip crop", &gi.skipCrop);
+        if (Button("Regen")) {
+            genAndUpdate(gi);
+        }
         if (Button("Update Display")) {
             updateDisplay();
             mm.camera.reset();
@@ -304,6 +319,7 @@ void preEditor() {
 int main() {
     return main_desktop({
         .postInit = postInit,
+        .preDraw = preDraw,
         .preShutdown = preShutdown,
         .preEditor = preEditor,
     });
