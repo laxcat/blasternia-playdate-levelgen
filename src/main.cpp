@@ -18,6 +18,12 @@ int pathCache[1000];
 int pathStep = 1000;
 int pathStepCount = -1;
 
+struct GenInfo {
+    bool skipSize = false;
+    bool skipPath = false;
+    bool skipCrop = false;
+};
+
 void resetCamera(Camera & c) {
     c.target      = {(float)levelData.w/2.f-(float)LEVEL_DATA_MAX_W/4.f, (float)levelData.h/2.f, 0.f};
     c.distance    = LEVEL_DATA_MAX_H + 2.f;
@@ -123,19 +129,25 @@ void updateDisplay() {
     LevGenQuad::updateVBuffer(plane, 0);
 }
 
-void genAndUpdate() {
+void genAndUpdate(GenInfo const & gi = {}) {
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &genStartTime);
 
-    LevelData_genSize(&levelData);
+    if (!gi.skipSize) {
+        LevelData_genSize(&levelData);
+    }
 
     LevelData_genStartEnd(&levelData);
 
-    pathStepCount = LevelData_genPath(&levelData, 1000, pathCache);
-    pathStep = pathStepCount;
+    if (!gi.skipPath) {
+        pathStepCount = LevelData_genPath(&levelData, 1000, pathCache);
+        pathStep = pathStepCount;
 
-    LevelData_genFillAroundPath(&levelData);
+        LevelData_genFillAroundPath(&levelData);
+    }
 
-    LevelData_genCrop(&levelData);
+    if (!gi.skipCrop) {
+        LevelData_genCrop(&levelData);
+    }
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &genEndTime);
     // microseconds
@@ -228,6 +240,17 @@ void preEditor() {
         Text("Last generation time (µsec): %ld", lastGenTime);
         Dummy(ImVec2(0.0f, 20.0f));
 
+        Text("Level Data Info:");
+        char temp[32];
+        Text("current index: %s", LDUtil_indexToString(levelData.currentIndex, temp));
+        Text("start index: %s", LDUtil_indexToString(levelData.startIndex, temp));
+        Text("end index: %s", LDUtil_indexToString(levelData.endIndex, temp));
+        Dummy(ImVec2(0.0f, 20.0f));
+
+        if (Button("Regen")) {
+            genAndUpdate();
+        }
+        SameLine();
         if (Button("Update Display")) {
             updateDisplay();
             mm.camera.reset();
@@ -248,8 +271,7 @@ void preEditor() {
             mm.camera.reset();
         }
         if (Button("Gen From Current Size")) {
-            LevelData_genStartEnd(&levelData);
-            updateDisplay();
+            genAndUpdate({.skipSize=true});
             mm.camera.reset();
         }
 
