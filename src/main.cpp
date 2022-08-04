@@ -142,10 +142,11 @@ void genAndUpdate(GenInfo const & gi = {}) {
     LevelData_genStartEnd(&levelData);
 
     if (!gi.skipPath) {
-        pathStepCount = LevelData_genPath(&levelData, 1000, pathCache);
-        pathStep = pathStepCount;
+        LevelData_genPath(&levelData, 1000, pathCache);
+        pathStepCount =
+        pathStep = levelData.genProgSubStep;
 
-        LevelData_genFillAroundPath(&levelData);
+        LevelData_genPathExpand(&levelData);
     }
 
     if (!gi.skipCrop) {
@@ -242,7 +243,7 @@ void preEditor() {
         }
         if (InputInt("Level", (int *)&levelData.levelId)) {
             if (levelData.levelId == 0) levelData.levelId = 1;
-            if (levelData.levelId > LEVEL_DATA_LAST_LEVEL) levelData.levelId = LEVEL_DATA_LAST_LEVEL;
+            if (levelData.levelId > LAST_LEVEL) levelData.levelId = LAST_LEVEL;
             genAndUpdate();
         }
 
