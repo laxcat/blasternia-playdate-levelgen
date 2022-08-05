@@ -5,17 +5,19 @@
 #include "LevGenQuad.h"
 #include "../../Playdate_proj/src/game/leveldata.h"
 #include <imgui.h>
+
+static constexpr int MaxPathStepCount = 1000;
+
 struct timespec genStartTime, genEndTime;
 long lastGenTime; // microseconds
-
 Renderable * plane;
 bgfx::ProgramHandle program;
 Texture levelTexture;
 LevelData levelData;
 bool showCurrent = true;
 
-int pathCache[1000];
-int pathStep = 1000;
+int pathCache[MaxPathStepCount];
+int pathStep = MaxPathStepCount;
 int pathStepCount = -1;
 
 struct GenInfo {
@@ -130,6 +132,8 @@ void updateDisplay() {
 }
 
 void genAndUpdate(GenInfo const & gi = {}) {
+    Direction pathDirCache[MaxPathStepCount];
+
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &genStartTime);
 
     // reset
@@ -142,7 +146,7 @@ void genAndUpdate(GenInfo const & gi = {}) {
     LevelData_genStartEnd(&levelData);
 
     if (!gi.skipPath) {
-        LevelData_genPath(&levelData, 1000, pathCache);
+        LevelData_genPath(&levelData, MaxPathStepCount, pathDirCache);
         pathStepCount =
         pathStep = levelData.genProgSubStep;
 
@@ -151,6 +155,11 @@ void genAndUpdate(GenInfo const & gi = {}) {
 
     if (!gi.skipCrop) {
         LevelData_genCrop(&levelData);
+    }
+
+    // we have to wait until after the cop to get our path indices list
+    if (!gi.skipPath) {
+        LevelData_getIndicesFromPathDirections(&levelData, pathStepCount, pathDirCache, pathCache);
     }
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &genEndTime);
