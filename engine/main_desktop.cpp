@@ -75,7 +75,7 @@ int main_desktop(EngineSetup const & setup) {
     if (setup.transparentFramebuffer) {
         glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE); // can be enabled to test transparent bg
     }
-    GLFWwindow * window = glfwCreateWindow(mm.windowSize.w, mm.windowSize.h, "3D IC, Desktop-prototype, BGFX", nullptr, nullptr);
+    GLFWwindow * window = glfwCreateWindow(mm.windowSize.w, mm.windowSize.h, "Blasternia Level Gen", nullptr, nullptr);
     if (!window) {
         fprintf(stderr, "window creation failed\n");
         return 1;
